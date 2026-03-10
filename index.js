@@ -9,7 +9,17 @@ import BrowserSync from "browser-sync";
 import BrowserSyncPlugin from "browser-sync-webpack-plugin";
 import webpack from "webpack";
 import getWebpackConfig from "./webpack.config.js";
-import { build, watch } from "./gulpfile.js";
+
+const localGulpfile = path.join(process.cwd(), "gulpfile.js");
+let build, watch;
+
+if (fs.existsSync(localGulpfile)) {
+    console.log("Using local gulpfile.js");
+    ({ build, watch } = await import(localGulpfile));
+} else {
+    console.log("Using global gulpfile.js");
+    ({ build, watch } = await import("./gulpfile.js"));
+}
 
 command.parse(process.argv);
 
@@ -53,7 +63,8 @@ const headerIncludes = {
 
         // Add custom includes to the footer
         const headerMarkup =
-            (fs.existsSync(outputFolder + "/scripts.header.js") ? '<script src="/scripts.header.js"></script>' : "") + (fs.existsSync(outputFolder + "/styles.header.css") ? '<link rel="stylesheet" href="/styles.header.css">' : "");
+            (fs.existsSync(outputFolder + "/scripts.header.js") ? '<script data-type="shp-bender-include" src="/scripts.header.js"></script>' : "") +
+            (fs.existsSync(outputFolder + "/styles.header.css") ? '<link data-type="shp-bender-include" rel="stylesheet" href="/styles.header.css">' : "");
         return match + headerMarkup;
     },
 };
@@ -74,8 +85,9 @@ const footerIncludes = {
 
         // Add custom includes to the footer
         const footerMarkup =
-            (fs.existsSync(outputFolder + "/scripts.footer.js") ? '<script src="/scripts.footer.js"></script>' : "") + (fs.existsSync(outputFolder + "/styles.footer.css") ? '<link rel="stylesheet" href="/styles.footer.css">' : "");
-        return footerMarkup + match;
+            (fs.existsSync(outputFolder + "/scripts.footer.js") ? '<script data-type="shp-bender-include" src="/scripts.footer.js"></script>' : "") +
+            (fs.existsSync(outputFolder + "/styles.footer.css") ? '<link data-type="shp-bender-include" rel="stylesheet" href="/styles.footer.css">' : "");
+        return match + footerMarkup;
     },
 };
 
@@ -115,7 +127,7 @@ async function runGulpTask() {
     }
 }
 
-function runGulp() {
+async function runGulp() {
     watch();
     runGulpTask();
     const bs = BrowserSync({
@@ -130,10 +142,12 @@ function runGulp() {
     });
 }
 
-if (config.builder === "webpack" || options.builder === "webpack") {
+const builder = options.builder || config.builder || "webpack";
+
+if (builder === "webpack") {
     runWebpack();
-} else if (config.builder === "gulp" || options.builder === "gulp") {
-    runGulp();
+} else if (builder === "gulp") {
+    await runGulp();
 } else {
     console.error("Please specify a valid builder: webpack or gulp");
 }

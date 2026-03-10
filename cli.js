@@ -14,6 +14,8 @@ command
     .option('-b, --blankMode', 'simulate the blank template.', false)
     .option('-n, --notify', 'display pop-over notifications in the browser', false)
     .option('-rh, --removeHeaderIncludes [removeHeaderIncludes...]', 'remove header includes', false)
-    .option('-rf, --removeFooterIncludes [removeFooterIncludes...]', 'remove footer includes', false);
+    .option('-rf, --removeFooterIncludes [removeFooterIncludes...]', 'remove footer includes', false)
+    .option('-bl, --builder <type>', 'Specify the builder to use (webpack or gulp)')
+    .option('-o, --open', 'open browser after first build process', false);
 
 export default command;
