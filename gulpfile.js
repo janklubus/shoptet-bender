@@ -1,6 +1,5 @@
 /* Shoptet Gulpstack, by Klubus Creative */
 
-// Variables
 import { config } from './config.js';
 import path from 'path';
 import gulp from 'gulp';
@@ -16,119 +15,130 @@ import rename from 'gulp-rename';
 
 const { wrap } = pkg;
 
-const rootDir = process.cwd();
+export function init(options = {}) {
+  const rootDir = process.cwd();
+  const sourceFolder = path.join(rootDir, config.sourceFolder ?? 'src');
+  const outputFolder = path.join(rootDir, config.outputFolder);
+  const addonPrefix = config.addonPrefix;
+  const addonInfo = config.addonInfo;
 
-const sourceFolder = path.join(rootDir, config.sourceFolder ?? 'src');
-const outputFolder = path.join(rootDir, config.outputFolder);
+  const env = options.env ?? config.env;
+  const isProduction = env?.production === true;
+  const minExtension = isProduction ? '.min' : '';
 
-const addonPrefix = config.addonPrefix;
-const addonInfo = config.addonInfo;
-
-const env = options.env ?? config.env;
-const isProduction = env?.production === true;
-const minExtension = isProduction ? '.min' : '';
-
-// Tasks
-gulp.task('styles-header', function () {
-  let stream = gulp
-    .src([sourceFolder + '/header/css/styles.less'], { allowEmpty: true })
-    .pipe(less())
-    .on('error', function (error) {
-      console.error('Error in styles-header task:', error.message);
-      this.emit('end');
-    })
-    .pipe(autoPrefixer())
-    .pipe(wrap('/* ' + addonInfo + ' */\n\n', ''));
-  if (isProduction) {
-    stream = stream.pipe(
-      postcss([
-        cssnano({
-          preset: ['default', { discardComments: { removeAll: true } }],
-        }),
-      ])
-    );
-  }
-  return stream
-    .pipe(rename('styles.header' + minExtension + '.css'))
-    .pipe(gulp.dest(outputFolder))
-    .on('end', () => {
-      console.log('Task style-header has been completed');
-    });
-});
-
-gulp.task('styles-footer', function () {
-  let stream = gulp
-    .src([sourceFolder + '/footer/css/styles.less'], { allowEmpty: true })
-    .pipe(less())
-    .on('error', function (error) {
-      console.error('Error in styles-footer task:', error.message);
-      this.emit('end');
-    })
-    .pipe(autoPrefixer())
-    .pipe(wrap('/* ' + addonInfo + ' */\n\n', ''));
-  if (isProduction) {
-    stream = stream.pipe(
-      postcss([
-        cssnano({
-          preset: ['default', { discardComments: { removeAll: true } }],
-        }),
-      ])
-    );
-  }
-  return stream
-    .pipe(rename('styles.footer' + minExtension + '.css'))
-    .pipe(gulp.dest(outputFolder))
-    .on('end', () => {
-      console.log('Task style-footer has been completed');
-    });
-});
-
-gulp.task('scripts-header', function () {
-  let stream = gulp
-    .src([sourceFolder + '/header/js/**/*.js'], { allowEmpty: true })
-    .pipe(concat('scripts.header' + minExtension + '.js'))
-    .pipe(wrap('var ' + addonPrefix + ' = {};(function (' + addonPrefix + ') {\n\n', '\n\n})(' + addonPrefix + ');'))
-    .pipe(wrap('/* ' + addonInfo + ' */ \n\n', ''));
-  if (isProduction) {
-    stream = stream
-      .pipe(uglify())
+  // -------------------- TASKS -------------------- //
+  gulp.task('styles-header', function () {
+    let stream = gulp
+      .src([sourceFolder + '/header/css/styles.less'], { allowEmpty: true })
+      .pipe(less())
       .on('error', function (error) {
-        console.error('Error in scripts-header task:', error.message);
+        console.error('Error in styles-header task:', error.message);
         this.emit('end');
       })
-      .pipe(javascriptObfuscator());
-  }
-  return stream.pipe(gulp.dest(outputFolder)).on('end', () => {
-    console.log('Task scripts-header has been completed');
-  });
-});
+      .pipe(autoPrefixer())
+      .pipe(wrap('/* ' + addonInfo + ' */\n\n', ''));
 
-gulp.task('scripts-footer', function () {
-  let stream = gulp
-    .src([sourceFolder + '/footer/js/**/*.js'], { allowEmpty: true })
-    .pipe(concat('scripts.footer' + minExtension + '.js'))
-    .pipe(wrap('var ' + addonPrefix + ' = {};(function (' + addonPrefix + ') {\n\n', '\n\n})(' + addonPrefix + ');'))
-    .pipe(wrap('/* ' + addonInfo + ' */ \n\n', ''));
-  if (isProduction) {
-    stream = stream
-      .pipe(uglify())
+    if (isProduction) {
+      stream = stream.pipe(
+        postcss([
+          cssnano({
+            preset: ['default', { discardComments: { removeAll: true } }],
+          }),
+        ])
+      );
+    }
+
+    return stream
+      .pipe(rename('styles.header' + minExtension + '.css'))
+      .pipe(gulp.dest(outputFolder))
+      .on('end', () => {
+        console.log('Task styles-header has been completed');
+      });
+  });
+
+  gulp.task('styles-footer', function () {
+    let stream = gulp
+      .src([sourceFolder + '/footer/css/styles.less'], { allowEmpty: true })
+      .pipe(less())
       .on('error', function (error) {
-        console.error('Error in scripts-footer task:', error.message);
+        console.error('Error in styles-footer task:', error.message);
         this.emit('end');
       })
-      .pipe(javascriptObfuscator());
-  }
-  return stream.pipe(gulp.dest(outputFolder)).on('end', () => {
-    console.log('Task scripts-footer has been completed');
-  });
-});
+      .pipe(autoPrefixer())
+      .pipe(wrap('/* ' + addonInfo + ' */\n\n', ''));
 
-export const build = gulp.series('styles-header', 'styles-footer', 'scripts-header', 'scripts-footer');
-export function watch() {
-  console.log('Starting watcher...');
-  gulp.watch(sourceFolder + '/header/css/**/*.less', gulp.series('styles-header'));
-  gulp.watch(sourceFolder + '/footer/css/**/*.less', gulp.series('styles-footer'));
-  gulp.watch(sourceFolder + '/header/js/**/*.js', gulp.series('scripts-header'));
-  gulp.watch(sourceFolder + '/footer/js/**/*.js', gulp.series('scripts-footer'));
+    if (isProduction) {
+      stream = stream.pipe(
+        postcss([
+          cssnano({
+            preset: ['default', { discardComments: { removeAll: true } }],
+          }),
+        ])
+      );
+    }
+
+    return stream
+      .pipe(rename('styles.footer' + minExtension + '.css'))
+      .pipe(gulp.dest(outputFolder))
+      .on('end', () => {
+        console.log('Task styles-footer has been completed');
+      });
+  });
+
+  gulp.task('scripts-header', function () {
+    let stream = gulp
+      .src([sourceFolder + '/header/js/**/*.js'], { allowEmpty: true })
+      .pipe(concat('scripts.header' + minExtension + '.js'))
+      .pipe(wrap('var ' + addonPrefix + ' = {};(function (' + addonPrefix + ') {\n\n', '\n\n})(' + addonPrefix + ');'))
+      .pipe(wrap('/* ' + addonInfo + ' */ \n\n', ''));
+
+    if (isProduction) {
+      stream = stream
+        .pipe(uglify())
+        .on('error', function (error) {
+          console.error('Error in scripts-header task:', error.message);
+          this.emit('end');
+        })
+        .pipe(javascriptObfuscator());
+    }
+
+    return stream.pipe(gulp.dest(outputFolder)).on('end', () => {
+      console.log('Task scripts-header has been completed');
+    });
+  });
+
+  gulp.task('scripts-footer', function () {
+    let stream = gulp
+      .src([sourceFolder + '/footer/js/**/*.js'], { allowEmpty: true })
+      .pipe(concat('scripts.footer' + minExtension + '.js'))
+      .pipe(wrap('var ' + addonPrefix + ' = {};(function (' + addonPrefix + ') {\n\n', '\n\n})(' + addonPrefix + ');'))
+      .pipe(wrap('/* ' + addonInfo + ' */ \n\n', ''));
+
+    if (isProduction) {
+      stream = stream
+        .pipe(uglify())
+        .on('error', function (error) {
+          console.error('Error in scripts-footer task:', error.message);
+          this.emit('end');
+        })
+        .pipe(javascriptObfuscator());
+    }
+
+    return stream.pipe(gulp.dest(outputFolder)).on('end', () => {
+      console.log('Task scripts-footer has been completed');
+    });
+  });
+
+  // -------------------- EXPORTS -------------------- //
+  const build = gulp.series('styles-header', 'styles-footer', 'scripts-header', 'scripts-footer');
+
+  function watchFn() {
+    console.log('Starting watcher...');
+    gulp.watch(sourceFolder + '/header/css/**/*.less', gulp.series('styles-header'));
+    gulp.watch(sourceFolder + '/footer/css/**/*.less', gulp.series('styles-footer'));
+    gulp.watch(sourceFolder + '/header/js/**/*.js', gulp.series('scripts-header'));
+    gulp.watch(sourceFolder + '/footer/js/**/*.js', gulp.series('scripts-footer'));
+  }
+
+  return { build, watch: watchFn };
 }
-export default build;

@@ -13,17 +13,16 @@ import getWebpackConfig from './webpack.config.js';
 const localGulpfile = path.join(process.cwd(), 'gulpfile.js');
 let build, watch;
 
+command.parse(process.argv);
+const options = command.opts();
+
 if (fs.existsSync(localGulpfile)) {
   console.log('Using local gulpfile.js');
-  ({ build, watch } = await import(localGulpfile));
+  ({ build, watch } = await import(localGulpfile).then(m => m.init(options)));
 } else {
   console.log('Using global gulpfile.js');
-  ({ build, watch } = await import('./gulpfile.js'));
+  ({ build, watch } = await import('./gulpfile.js').then(m => m.init(options)));
 }
-
-command.parse(process.argv);
-
-const options = command.opts();
 
 const rootDir = process.cwd();
 
